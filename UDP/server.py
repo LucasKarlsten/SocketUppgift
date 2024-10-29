@@ -10,9 +10,20 @@ class ChatRoom:
         # Upprättar en socket som använder Ipv4 och som kommer skicka data över UDP
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+    def start(self):
+        try:
+            self.server_socket.bind((self.host, self.port))
+            self.server_socket.listen()
+            print(f'Server upprättad på {self.host} : {self. port}')
+            while True:
+                data, addr = self.server_socket.recvfrom(256)
+
+        except Exception as e:
+            print(f'Ett fel uppstod {e}')
         
 # HOST = '127.0.0.1'
 # PORT = 12345
+
 
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
     sock.bind((ChatRoom.host, ChatRoom.port))
