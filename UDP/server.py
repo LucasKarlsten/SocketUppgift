@@ -1,39 +1,42 @@
 import socket
 
-
 class ChatRoom:
+    # Skapar en klass med en konstruktor och ger den host, port, server socketen, och en set() för klienter
     def __init__(self, host, port):
-        # Initiera en ny klass med host och port, sätter också upp en ny lista med cliens
-        self.host = '127.0.0.1'
-        self.port = 22322
-        self.clients = []
-        # Upprättar en socket som använder Ipv4 och som kommer skicka data över UDP
+        self.host = host
+        self.port = port
+        self.clients = set()
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def start(self):
         try:
+            # Programmet binder sig till den deklarerade porten och ip-adressen
             self.server_socket.bind((self.host, self.port))
-            self.server_socket.listen()
-            print(f'Server upprättad på {self.host} : {self. port}')
+            print(f"Server upprättad på {self.host}:{self.port}")
             while True:
-                data, addr = self.server_socket.recvfrom(256)
-
+                # Servern tar emot data och adresser som kommer från klienterna
+                data, addr = self.server_socket.recvfrom(1024)
+                # Om klienten inte redan är "registrerad" i set()en med clients så printar den ut att en ny har joinat"
+                if addr not in self.clients:
+                    self.clients.add(addr)
+                    print(f"New client connected: {addr}")
+                
+                # Decodea meddelandet med utf8 och printar på servern
+                message = data.decode("utf-8")
+                print(f"Message received from {addr}: {message}")
+                
+                # Skicka meddelandet till alla klienter, utom den som skickade
+                for client in self.clients:
+                    if client != addr:
+                        self.server_socket.sendto(data, client)
+                        
         except Exception as e:
-            print(f'Ett fel uppstod {e}')
-        
-# HOST = '127.0.0.1'
-# PORT = 12345
+            print(f"Ett fel uppstod: {e}")
+        finally:
+            self.server_socket.close()
 
-
-with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-    sock.bind((ChatRoom.host, ChatRoom.port))
-    print(f'Server listening on adress; {ChatRoom.host} : {ChatRoom.port}')
-
-    while True: 
-        data, addr = sock.recvfrom(256)
-        print(f'Message recieved from {addr}')
-
-        data_decoded = data.decode('utf-8')
-        response = f'echo, {data_decoded}'
-        sock.sendto(response.encode('utf-8'), addr)
-
+if __name__ == "__main__":
+    HOST = '127.0.0.1'
+    PORT = 12345
+    chat_room = ChatRoom(HOST, PORT)
+    chat_room.start()
